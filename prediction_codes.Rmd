@@ -1,0 +1,136 @@
+---
+title: "STA_141c_Final_project"
+author: "Quoc Anh"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Data summary EDA
+```{r}
+data <- read.csv('data_drake_final.csv')
+data1 = subset(data, select = -track_name.x)
+data1 = subset(data1, select = -WeekDate)
+```
+
+```{r}
+summary(data1$on_chart)
+```
+mean is 0.4836. this mean that 48.5% of our songs in the dataset is on the chart, so we have quite a balance dataset for the response variable
+
+
+```{r}
+#correlation matrix
+library(corrplot)
+library(ggplot2)
+corr_matrix = cor(data1)
+corrplot(corr_matrix)
+```
+multicolinearlity problem amongst independent variable.
+Not much we can say on the relationship b/w response variables and independent variable
+
+```{r}
+attach(data1)
+boxplots <- list()
+
+variables <- c("tempo","valence","liveness","instrumentalness","acousticness","speechiness","loudness"
+               ,"energy","danceability")
+
+for (variable in variables) {
+  
+  plot <- ggplot(data1, aes_string(x = factor(on_chart), y = variable, fill = factor(on_chart))) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("blue", "red"), 
+                      name = "Top 200 Status",
+                      labels = c("Not Top 200", "Top 200")) +
+    labs(title = paste("Boxplot of", variable, "by Top 200 Status"), 
+         x = "Top 200 Status", 
+         y = variable) +
+    theme_minimal()
+  
+  # Store the plot in the list
+  boxplots[[variable]] <- plot
+}
+boxplots
+```
+
+using these boxplots, we can see there is no clear distinction in features between songs that make the top 200 and song that does not make the top 200. The most prominent independent variables are likely to be tempo and danceability.
+
+
+
+METHODOLOGY
+
+We now start with logistic model
+```{r}
+#setup train and validation set
+set.seed(141)
+train <- sample(c(TRUE, FALSE), nrow(data1),replace = TRUE)
+valid <- !train
+```
+
+
+```{r}
+#fit a logisitc model  
+
+#fit a logisitc model
+data1$on_chart <- as.factor(data1$on_chart)
+
+log_model1 <- glm(y~., data = data1, subset = train, family=binomial)
+summary(log_model1)
+
+stepwise_model <- step(log_model1, direction = "both")
+
+# Print summary of the stepwise selected model
+summary(stepwise_model)
+```
+
+
+logisitc with polynomial on the two prominent independent variables (random choices)
+```{r}
+data3 <- data1
+data3$tempo_2 = data3$tempo**2
+data3$valence_2 = data3$valence**2
+
+x_mat3 = model.matrix(on_chart~. +tempo_2 +valence_2,data=data3)[,-1]
+y = data3$on_chart
+data3 = data.frame(y,x_mat3)
+
+#fit a logisitc model  
+log_model2 <- glm(y~., data = data3, subset = train, family=binomial)
+
+summary(log_model2)
+
+```
+
+
+LASSO regression
+```{r}
+x_mat = model.matrix(on_chart~. ,data=data1)[,-1]
+y = data1$on_chart
+x_valid = x_mat[valid,]
+lasso_model <- glmnet(x_mat[train,], y[train], alpha=1, family="binomial")
+
+set.seed(141) 
+cv_lasso <- cv.glmnet(x_mat[train,], y[train], alpha=1, family="binomial")
+op_lambda <- cv_lasso$lambda.min
+lasso_model_op <- glmnet(x_mat[train,], y[train], alpha=1, family="binomial", lambda=op_lambda)
+
+lasso_pred <- predict(lasso_model_op, newx = x_valid, type = "response")
+lasso_predicted_class <- ifelse(lasso_pred > 0.5, 1, 0)
+lasso_test_MSE <- mean((lasso_predicted_class-data1$on_chart[valid])**2)
+```
+
+
+```{r}
+
+# Train the decision tree model
+model <- rpart(on_chart ~ ., data = data)
+plot(model)
+text(model)
+```
+
+
+

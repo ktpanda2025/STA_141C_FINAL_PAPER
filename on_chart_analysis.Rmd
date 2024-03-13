@@ -1,0 +1,54 @@
+---
+title: "On_charts_anaysis"
+author: "Kevin"
+date: "2024-03-13"
+output: html_document
+
+EDA for songs on the chart only 
+---
+```{r}
+library(tidyr)
+```
+
+The metadata doesnt have the artist name but can linke by "uri" to the ranking data that hase the artist_name
+```{r}
+Spotify_data_ranks <- read.csv("New_Spspotify_chart_song_ranks.csv")
+songs_on_chart_metaData <- read_csv("Spotify_audio_features.csv")
+
+```
+
+```{r}
+drake_chart_spotify = Spotify_data_ranks%>% 
+  filter(artist_names == "Drake") %>% 
+  distinct(uri,.keep_all = TRUE) %>% 
+  arrange(WeekDate)
+
+unique(drake_chart_spotify$artist_names)
+dim(drake_chart_spotify)
+```
+
+just checking audio feature
+```{r}
+checking_audio_feature = songs_on_chart_metaData %>% 
+  group_by(uri) %>% 
+  tally()
+unique(checking_audio_feature$n)
+```
+
+
+```{r}
+ joined_table <- inner_join(songs_on_chart_metaData, drake_chart_spotify, by = c( "uri"="uri"))
+```
+
+
+
+```{r}
+
+variables <- c("tempo","valence","liveness","instrumentalness","acousticness","speechiness","loudness"
+               ,"energy","danceability")
+
+
+
+ggplot(data= joined_table, aes(x=track_name, y =danceability) ) + geom_point() 
+```
+
