@@ -1,0 +1,13 @@
+```{r}
+data_drake_final <- read_csv("data_drake_final.csv")
+colnames(data_drake_final)
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+ggplot(data = data_drake_final , aes(x =track_name.x, y = danceability, color = on_chart)) + geom_point()
+```
+

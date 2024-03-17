@@ -7,13 +7,13 @@ output: html_document
 EDA for songs on the chart only 
 ---
 ```{r}
-library(tidyr)
+library(tidyverse)
 ```
 
 The metadata doesnt have the artist name but can linke by "uri" to the ranking data that hase the artist_name
 ```{r}
 Spotify_data_ranks <- read.csv("New_Spspotify_chart_song_ranks.csv")
-songs_on_chart_metaData <- read_csv("Spotify_audio_features.csv")
+songs_on_chart_metaData <- read.csv("Spotify_audio_features.csv")
 
 ```
 
