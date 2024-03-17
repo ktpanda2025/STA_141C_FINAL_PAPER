@@ -31,7 +31,8 @@ drake_chart_spotify
 
 ```{r}
 kaggle_2020 = kaggle %>% 
-   filter(album_release_year >= 2020)
+   filter(album_release_year >= 2020) %>% 
+   distinct(track_name,.keep_all = TRUE)
 ```
 
 ```{r}

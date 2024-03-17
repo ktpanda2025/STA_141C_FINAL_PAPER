@@ -1,5 +1,6 @@
 ```{r}
-data_drake_final <- read_csv("data_drake_final.csv")
+data_drake_final <- read_csv("aaa.csv")
+data_drake_final$on_chart <- factor(data_drake_final$on_chart)
 colnames(data_drake_final)
 ```
 
@@ -8,6 +9,86 @@ library(tidyverse)
 ```
 
 ```{r}
-ggplot(data = data_drake_final , aes(x =track_name.x, y = danceability, color = on_chart)) + geom_point()
+
+# Define color palette
+palette <- c("1" = "blue", "0" = "red")
+
+# Create an empty list to store the plots
+plots_list <- list()
+
+# Loop over each variable except 'WeekDate', 'track_name.x', 'track_name.y', and 'on_chart'
+for (variable in colnames(data1)[!colnames(data1) %in% c("WeekDate", "track_name.x", "track_name.y", "on_chart")]) {
+  # Create the scatter plot for the current variable
+  plot <- ggplot(data = data1, aes_string(x = "track_name.x", y = variable, color = factor(on_chart))) + 
+    geom_point() + 
+    scale_color_manual(values = palette) + 
+    labs(x = "Song", y = variable) +
+    ggtitle(paste("Comparison of", variable, "by On Chart Status")) +
+    theme_minimal() +
+    theme(axis.text.x = element_blank(),
+           axis.title = element_text(face = "bold", size = 12))
+  
+  # Add the plot to the list
+  plots_list[[variable]] <- plot
+}
+
+# Display the plots
+plots_list
+
+```
+```{r}
+library(plotly)
+palette <- c("1" = "blue", "0" = "red")
+# Create 3D scatter plot
+ plot_ly(data = data_drake_final, 
+        z = ~tempo,
+        y = ~acousticness,
+        x = ~speechiness,
+        color = ~on_chart, 
+        colors = palette,
+        type = "scatter3d",
+        mode = "markers",
+        marker = list(size = 5)) %>%
+  layout(title = "Comparison of Acousticness,Speechiness and Tempo between On Chart and Off Chart Songs")
+```
+
+```{r}
+ggplot(data = data_drake_final, aes(x = acousticness,y = speechiness,color = on_chart)) +geom_point()
+```
+```{r}
+#data1 = subset(data_drake_final, select = -track_name.x)
+data1 = subset(data_drake_final, select = -WeekDate) # lfhskldhflksdhflks
+data1 = subset(data1, select = -track_name.y)
+data1$on_chart <- as.numeric(data1$on_chart == 1)#make it back into numeric
+```
+
+```{r}
+library(corrplot)
+corr_matrix = cor(data1)
+corrplot(corr_matrix)
+```
+```{r}
+attach(data1)
+boxplots <- list()
+
+variables <- c("tempo","valence","liveness","instrumentalness","acousticness","speechiness","loudness"
+               ,"energy","danceability")
+
+for (variable in variables) {
+  
+  plot <- ggplot(data1, aes_string(x = factor(on_chart), y = variable, fill = factor(on_chart))) +
+    geom_boxplot() +
+    scale_fill_manual(values = c("blue", "red"), 
+                      name = "Top 200 Status",
+                      labels = c("Not Top 200", "Top 200")) +
+    labs(title = paste("Boxplot of", variable, "by Top 200 Status"), 
+         x = "Top 200 Status", 
+         y = variable) +
+    theme_minimal()
+  
+  # Store the plot in the list
+  boxplots[[variable]] <- plot
+}
+boxplots
 ```
 
