@@ -1,5 +1,5 @@
 ```{r}
-data_drake_final <- read_csv("aaa.csv")
+data_drake_final <- read.csv("aaa.csv")
 data_drake_final$on_chart <- factor(data_drake_final$on_chart)
 colnames(data_drake_final)
 ```
